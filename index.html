@@ -2,7 +2,7 @@
 <html lang="ja">
 
 <head>
-    <meta charset="UTF-G">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CFO高度専門職人材リクルート活動 検討状況報告</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,24 +28,11 @@
             display: block;
         }
 
-        .accordion-content {
+        /* アコーディオンコンテンツの初期状態（非表示） */
+        .timeline-item-content {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
-        }
-
-        .timeline-item-content {
-            display: none;
-        }
-
-        .chart-container {
-            position: relative;
-            width: 100%;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 300px;
-            max-height: 350px;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out; /* paddingもスムーズに変化させる */
         }
 
         /* Tailwind a:hover:text-indigo-400 etc. doesn't always override, so explicit here */
@@ -60,6 +47,17 @@
 
         .tab-button {
             transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* チャートコンテナのスタイル */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
         }
     </style>
 </head>
@@ -440,20 +438,22 @@
     </footer>
 
     <script>
+        // モバイルメニューの開閉を制御
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
         mobileMenuButton.addEventListener('click', () => {
             mobileMenu.classList.toggle('hidden');
         });
 
+        // ナビゲーションリンクがクリックされたときにスムーズスクロールし、モバイルメニューを閉じる
         document.querySelectorAll('nav a[href^="#"], #mobile-menu a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                mobileMenu.classList.add('hidden'); // Close mobile menu on item click
+                mobileMenu.classList.add('hidden'); // モバイルメニュー項目クリック時にモバイルメニューを閉じる
                 const targetId = this.getAttribute('href');
                 const targetElement = document.querySelector(targetId);
                 if (targetElement) {
-                    // Offset for sticky header
+                    // スティッキーヘッダーのオフセットを計算
                     const headerOffset = document.querySelector('header').offsetHeight;
                     const elementPosition = targetElement.getBoundingClientRect().top;
                     const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
@@ -466,45 +466,54 @@
             });
         });
 
+        // タブ切り替え機能を制御
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
 
         tabButtons.forEach(button => {
             button.addEventListener('click', () => {
+                // すべてのタブボタンからactiveクラスと背景色を削除
                 tabButtons.forEach(btn => btn.classList.remove('active', 'bg-indigo-600', 'text-white'));
+                // クリックされたボタンにactiveクラスと背景色を追加
                 button.classList.add('active', 'bg-indigo-600', 'text-white');
 
+                // すべてのタブコンテンツからactiveクラスを削除
                 tabContents.forEach(content => content.classList.remove('active'));
+                // 対応するタブコンテンツにactiveクラスを追加して表示
                 document.getElementById(button.dataset.tab + '-content').classList.add('active');
             });
         });
 
+        // タイムラインの詳細表示/非表示を制御（アコーディオン機能）
         const timelineItems = document.querySelectorAll('.timeline-item button.timeline-date');
         timelineItems.forEach(item => {
             item.addEventListener('click', () => {
-                const content = item.nextElementSibling;
-                const arrow = item.querySelector('.accordion-arrow');
-                if (content.style.maxHeight && content.style.maxHeight !== '0px') {
-                    content.style.maxHeight = '0px';
-                    arrow.textContent = '▼ 詳細';
-                    content.classList.remove('py-2');
-                } else {
-                    content.style.maxHeight = content.scrollHeight + "px";
-                    arrow.textContent = '▲ 閉じる';
-                    content.classList.add('py-2');
+                const content = item.nextElementSibling; // 詳細コンテンツの要素を取得
+                const arrow = item.querySelector('.accordion-arrow'); // 「詳細」/「閉じる」テキストの要素を取得
 
+                // 詳細コンテンツが表示されている場合（maxHeightが0px以外の場合）
+                if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+                    content.style.maxHeight = '0px'; // 高さを0にして非表示にする
+                    arrow.textContent = '▼ 詳細'; // テキストを「詳細」に戻す
+                    content.classList.remove('py-2'); // パディングを削除
+                } else {
+                    // 詳細コンテンツが非表示の場合
+                    content.style.maxHeight = (content.scrollHeight + 20) + "px"; // コンテンツの高さに合わせて表示する
+                    arrow.textContent = '▲ 閉じる'; // テキストを「閉じる」に変更する
+                    content.classList.add('py-2'); // パディングを追加
                 }
             });
         });
 
+        // Chart.js を使用した要件優先度チャートの描画
         const ctx = document.getElementById('requirementsPriorityChart').getContext('2d');
         const requirementsPriorityChart = new Chart(ctx, {
-            type: 'bar',
+            type: 'bar', // 棒グラフ
             data: {
                 labels: ['財務・会計専門性＋実務経験 (A+B)', 'プロジェクトマネジメントと連携 (C)', '不動産関連知識 (D)', '大学関連の知識・経験 (D)'],
                 datasets: [{
-                    label: '優先度 (高→低)',
-                    data: [10, 7, 4, 3],
+                    label: '優先度 (高→低)', // 凡例のラベル
+                    data: [10, 7, 4, 3], // 各項目のデータ値
                     backgroundColor: [
                         'rgba(79, 70, 229, 0.7)', // indigo-600
                         'rgba(5, 150, 105, 0.7)',  // teal-600
@@ -521,28 +530,28 @@
                 }]
             },
             options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
+                indexAxis: 'y', // 横棒グラフにする
+                responsive: true, // レスポンシブ対応
+                maintainAspectRatio: false, // アスペクト比を維持しない
                 scales: {
                     x: {
-                        beginAtZero: true,
+                        beginAtZero: true, // 0から開始
                         ticks: {
-                            display: false // Hide x-axis numbers, as they are relative
+                            display: false // x軸の数値を非表示
                         },
                         grid: {
-                            display: false
+                            display: false // x軸のグリッド線を非表示
                         }
                     },
                     y: {
                         ticks: {
                             font: {
-                                size: 10 // Adjust y-axis label font size if needed
+                                size: 10 // y軸ラベルのフォントサイズ
                             },
-                            autoSkip: false,
+                            autoSkip: false, // ラベルの自動スキップを無効にする
                             callback: function (value, index, values) {
                                 const label = this.getLabelForValue(value);
-                                if (label.length > 16) { // Max length before wrapping
+                                if (label.length > 16) { // 16文字以上の場合に改行
                                     return label.match(new RegExp('.{1,' + 16 + '}', 'g'));
                                 }
                                 return label;
@@ -552,7 +561,7 @@
                 },
                 plugins: {
                     legend: {
-                        display: false
+                        display: false // 凡例を非表示
                     },
                     tooltip: {
                         callbacks: {
@@ -561,9 +570,7 @@
                                 if (label) {
                                     label += ': ';
                                 }
-                                // You can customize tooltip further if needed,
-                                // but for priority, the visual length is key.
-                                // For example, you could map data back to "High", "Medium", "Low"
+                                // 優先度スコアに基づいてテキストをカスタマイズ
                                 let priorityScore = context.raw;
                                 let priorityText = '';
                                 if (priorityScore >= 9) priorityText = '最優先';
@@ -576,7 +583,6 @@
                 }
             }
         });
-
     </script>
 </body>
 
